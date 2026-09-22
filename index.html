@@ -686,6 +686,9 @@ window.addEventListener('error', function(e){
   var playerEmail = '';
   var COMPANY_DOMAIN = 'ingrammicro.com';
   var PLAYED_STORAGE_KEY = 'spinhit_played_emails_v1';
+  // TODO: set this to your backend / Google Apps Script / API endpoint to receive scores.
+  // If left blank, scores are still saved locally (localStorage) but nothing is sent to a server.
+  var SCORE_SUBMIT_URL = '';
 
   function sanitizeName(raw){
     return raw
@@ -709,19 +712,46 @@ window.addEventListener('error', function(e){
       return !!played[email];
     }catch(e){ return false; }
   }
-  function markAsPlayed(email, name, scoreVal){
+  function markAsPlayed(email, payload){
     try{
       var played = getPlayedEmails();
-      var now = new Date();
       played[email] = {
-        name: name,
-        score: scoreVal,
-        timestamp: now.getTime(),
-        playedAt: now.toISOString(),
-        playedAtDisplay: now.toLocaleString()
+        name: payload.name,
+        score: payload.score,
+        timestamp: new Date(payload.playedAt).getTime(),
+        playedAt: payload.playedAt,
+        playedAtDisplay: new Date(payload.playedAt).toLocaleString()
       };
       localStorage.setItem(PLAYED_STORAGE_KEY, JSON.stringify(played));
     }catch(e){ /* storage unavailable — fail silently, game still works */ }
+  }
+
+  // Builds the score payload once, saves it locally (so the "one entry per email"
+  // gate keeps working), then POSTs it to SCORE_SUBMIT_URL if one is configured.
+  async function submitScore(){
+    var now = new Date();
+    var payload = {
+      name: playerName,
+      email: playerEmail,
+      score: score,
+      date: now.toISOString().slice(0, 10),   // e.g. "2026-09-22"
+      time: now.toTimeString().slice(0, 8),   // e.g. "14:32:07" (local time)
+      playedAt: now.toISOString()             // full timestamp, e.g. "2026-09-22T14:32:07.123Z"
+    };
+
+    markAsPlayed(playerEmail, payload);
+
+    if(!SCORE_SUBMIT_URL){ return payload; }
+
+    try{
+      await fetch(SCORE_SUBMIT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    }catch(e){ /* submission failed — score is already saved locally, game still works */ }
+
+    return payload;
   }
 
   function getLeaderboard(){
@@ -1071,10 +1101,9 @@ window.addEventListener('error', function(e){
     document.getElementById('finalBadge').textContent = badge;
     document.getElementById('finalTitle').textContent = title;
     document.getElementById('finalSub').textContent = sub;
-    var playedAtDisplay = new Date().toLocaleString();
-    document.getElementById('playerRecord').textContent = 'Player: ' + playerName + ' (' + playerEmail + ') • ' + playedAtDisplay;
+    document.getElementById('playerRecord').textContent = 'Player: ' + playerName + ' (' + playerEmail + ') • ' + new Date().toLocaleString();
     show('final');
-    markAsPlayed(playerEmail, playerName, score);
+    submitScore();
     spawnConfetti('finalScreen');
   }
 
