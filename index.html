@@ -173,8 +173,8 @@
   #finalBadge{font-size:56px;}
   #finalTitle{font-size:22px; font-weight:800; margin:6px 0 4px;}
   #finalSub{font-size:13px; color:var(--dim); margin-bottom:16px;}
-  .statsRow{display:flex; gap:12px; margin-bottom:20px;}
-  .statBox{background:#fff; border:2px solid var(--line); border-radius:14px; padding:12px 18px; min-width:90px;}
+  .statsRow{display:flex; gap:8px; margin-bottom:20px;}
+  .statBox{background:#fff; border:2px solid var(--line); border-radius:14px; padding:10px 12px; min-width:76px; flex:1;}
   .statBox .n{font-size:22px; font-weight:800;}
   .statBox .l{font-size:9px; color:var(--dim); font-weight:700; margin-top:2px;}
   #playAgainBtn{font-weight:800; font-size:16px; color:#fff; background:var(--pink);
@@ -298,6 +298,7 @@
       <div class="statsRow">
         <div class="statBox"><div class="n" id="finalScore">0</div><div class="l">💰 SCORE (OUT OF 100)</div></div>
         <div class="statBox"><div class="n" id="finalAcc">0%</div><div class="l">ACCURACY</div></div>
+        <div class="statBox"><div class="n" id="finalTime">0:00</div><div class="l">⏱️ TIME TAKEN</div></div>
       </div>
       <div id="finalNote">Thanks for playing. See you next Cybersecurity Awareness Month.</div>
       <div id="playerRecord"></div>
@@ -684,6 +685,7 @@ window.addEventListener('error', function(e){
 
   var playerName = '';
   var playerEmail = '';
+  var gameStartTime = 0;
   var COMPANY_DOMAIN = 'ingrammicro.com';
   var PLAYED_STORAGE_KEY = 'spinhit_played_emails_v1';
   // TODO: set this to your backend / Google Apps Script / API endpoint to receive scores.
@@ -699,6 +701,12 @@ window.addEventListener('error', function(e){
   }
   function sanitizeEmail(raw){
     return raw.replace(/\s+/g, '').trim().toLowerCase().slice(0, 120);
+  }
+  function formatDuration(totalSeconds){
+    var s = Math.max(0, Math.round(totalSeconds));
+    var m = Math.floor(s / 60);
+    var rem = s % 60;
+    return m + ':' + (rem < 10 ? '0' : '') + rem;
   }
   function getPlayedEmails(){
     try{
@@ -718,6 +726,8 @@ window.addEventListener('error', function(e){
       played[email] = {
         name: payload.name,
         score: payload.score,
+        durationSeconds: payload.durationSeconds,
+        durationDisplay: payload.durationDisplay,
         timestamp: new Date(payload.playedAt).getTime(),
         playedAt: payload.playedAt,
         playedAtDisplay: new Date(payload.playedAt).toLocaleString()
@@ -730,10 +740,13 @@ window.addEventListener('error', function(e){
   // gate keeps working), then POSTs it to SCORE_SUBMIT_URL if one is configured.
   async function submitScore(){
     var now = new Date();
+    var durationSeconds = gameStartTime ? Math.round((now.getTime() - gameStartTime) / 1000) : null;
     var payload = {
       name: playerName,
       email: playerEmail,
       score: score,
+      durationSeconds: durationSeconds,           // total time spent playing, in seconds
+      durationDisplay: durationSeconds !== null ? formatDuration(durationSeconds) : '',  // e.g. "2:14"
       date: now.toISOString().slice(0, 10),   // e.g. "2026-09-22"
       time: now.toTimeString().slice(0, 8),   // e.g. "14:32:07" (local time)
       playedAt: now.toISOString()             // full timestamp, e.g. "2026-09-22T14:32:07.123Z"
@@ -762,19 +775,26 @@ window.addEventListener('error', function(e){
       var entry = played[email];
       // support older records that were just a raw timestamp number
       if(typeof entry === 'number'){
-        rows.push({ email: email, name: '', score: null, timestamp: entry, playedAtDisplay: new Date(entry).toLocaleString() });
+        rows.push({ email: email, name: '', score: null, durationSeconds: null, durationDisplay: '', timestamp: entry, playedAtDisplay: new Date(entry).toLocaleString() });
       } else {
         rows.push({
           email: email,
           name: entry.name || '',
           score: (typeof entry.score === 'number') ? entry.score : null,
+          durationSeconds: (typeof entry.durationSeconds === 'number') ? entry.durationSeconds : null,
+          durationDisplay: entry.durationDisplay || '',
           timestamp: entry.timestamp || 0,
           playedAtDisplay: entry.playedAtDisplay || (entry.timestamp ? new Date(entry.timestamp).toLocaleString() : '')
         });
       }
     }
+    // Rank by score first (higher is better); when scores tie, the faster
+    // completion time wins — this is what surfaces who finished quickest.
     rows.sort(function(a,b){
-      if(b.score !== a.score) return (b.score||0) - (a.score||0);
+      if((b.score||0) !== (a.score||0)) return (b.score||0) - (a.score||0);
+      var aDur = (a.durationSeconds===null) ? Infinity : a.durationSeconds;
+      var bDur = (b.durationSeconds===null) ? Infinity : b.durationSeconds;
+      if(aDur !== bDur) return aDur - bDur;
       return a.timestamp - b.timestamp;
     });
     return rows;
@@ -820,6 +840,7 @@ window.addEventListener('error', function(e){
 
   document.getElementById('startBtn').onclick = function(){
     sfxTap();
+    gameStartTime = Date.now();
     document.getElementById('startScreen').classList.add('hidden');
   };
 
@@ -1092,8 +1113,10 @@ window.addEventListener('error', function(e){
 
   function finishGame(){
     var pct = Math.round((correctCount/ROUNDS.length)*100);
+    var durationSeconds = gameStartTime ? Math.round((Date.now() - gameStartTime) / 1000) : 0;
     document.getElementById('finalScore').textContent = score + '/100';
     document.getElementById('finalAcc').textContent = pct + '%';
+    document.getElementById('finalTime').textContent = formatDuration(durationSeconds);
     var badge, title, sub;
     if(pct >= 80){ badge='🏆'; title='Security Champion'; sub='You successfully identified every scam before it could catch you.'; }
     else if(pct >= 50){ badge='🛡️'; title='Good Awareness'; sub='Solid instincts — a bit more practice and you\u2019ll catch everything.'; }
