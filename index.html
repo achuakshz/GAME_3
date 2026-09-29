@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Spin & Hit — Ingram Micro Cybersecurity Awareness</title>
+<title>SPIN • SPOT • SECURE — Ingram Micro Cybersecurity Awareness</title>
 <style>
   :root{
     --bg:#FFFBF3;
@@ -185,6 +185,24 @@
   #playAgainBtn:active{transform:translateY(4px); box-shadow:0 2px 0 #C93E7E;}
   #finalNote{font-size:12px; color:var(--dim); font-weight:600; margin-top:6px;}
   #playerRecord{font-size:10px; color:var(--dim); font-weight:600; margin-top:8px; opacity:.8;}
+  #submitReminder{
+    max-width:340px; margin:2px 0 12px; padding:10px 14px;
+    background:#FFF4C7; border:2px solid #FFC53D; border-radius:14px;
+    color:#5B4510; font-size:12px; line-height:1.45; font-weight:800;
+  }
+  #submitScoreBtn{
+    font-weight:800; font-size:16px; color:#fff; background:var(--green);
+    border:none; padding:14px 36px; border-radius:28px; cursor:pointer;
+    box-shadow:0 6px 0 #2E9A76; animation:submitPulse 1.5s ease-in-out infinite;
+  }
+  #submitScoreBtn:active{transform:translateY(4px); box-shadow:0 2px 0 #2E9A76;}
+  #submitScoreBtn:disabled{opacity:.65; cursor:default; animation:none;}
+  @keyframes submitPulse{
+    0%,100%{transform:scale(1);}
+    50%{transform:scale(1.045);}
+  }
+  @media (prefers-reduced-motion:reduce){#submitScoreBtn{animation:none;}}
+
 
   #errBox{position:absolute; left:10px; right:10px; bottom:10px; background:#FFF0F0; border:1px solid var(--coral);
     color:#8A1F1F; font-size:11px; padding:8px 10px; border-radius:6px; z-index:999; display:none; text-align:left;}
@@ -199,41 +217,33 @@
   /* GAMEPLAY-ONLY VISUAL REFRESH: login, introduction and final screen untouched. */
   #hitOverlay{
     isolation:isolate; overflow-y:auto; overflow-x:hidden;
-    background:radial-gradient(circle at 12% 12%,rgba(255,209,89,.38),transparent 32%),
-      radial-gradient(circle at 88% 28%,rgba(255,97,180,.38),transparent 38%),
-      radial-gradient(circle at 25% 88%,rgba(63,213,219,.40),transparent 42%),
-      linear-gradient(145deg,#7556e9 0%,#bd62db 46%,#ff9c8b 100%);
-    color:#251747;
+    background:#FFFFFF;
+    color:#253247;
   }
-  #hitOverlay::before,#hitOverlay::after{
-    content:""; position:absolute; border-radius:50%; pointer-events:none; z-index:-1;
-    border:2px solid rgba(255,255,255,.35);
-  }
-  #hitOverlay::before{width:235px;height:235px;top:-110px;right:-100px;box-shadow:0 0 0 25px rgba(255,255,255,.07),0 0 0 52px rgba(255,255,255,.05)}
-  #hitOverlay::after{width:170px;height:170px;bottom:-85px;left:-85px;box-shadow:0 0 0 22px rgba(255,255,255,.08)}
-  #hitOverlay .levelTagWrap{padding:7px 12px; border-radius:18px;background:rgba(255,255,255,.92);box-shadow:0 7px 20px rgba(51,25,110,.13)}
+  #hitOverlay::before,#hitOverlay::after{display:none;}
+  #hitOverlay .levelTagWrap{padding:7px 12px;border-radius:18px;background:#F7F8FA;border:1px solid #E4E7EC;box-shadow:none}
   #hitOverlay #hitScenario{width:100%;padding:13px 15px;margin:12px 0 12px;border-radius:17px;
-    background:rgba(255,255,255,.93);color:#30204f;font-size:14px;line-height:1.5;
-    box-shadow:0 8px 0 rgba(63,30,122,.12),0 12px 25px rgba(50,20,100,.12)}
-  #hitOverlay #clockFace{background:#fff1a7;border:3px solid #fff;color:#5b3286;
-    font-size:18px;padding:7px 17px;box-shadow:0 5px 0 rgba(77,38,132,.23),0 0 20px rgba(255,238,153,.7)}
+    background:#F7F8FA;color:#253247;font-size:14px;line-height:1.5;
+    border:1px solid #E4E7EC;box-shadow:none}
+  #hitOverlay #clockFace{background:#FFFFFF;border:2px solid #D9DEE7;color:#253247;
+    font-size:18px;padding:7px 17px;box-shadow:0 3px 10px rgba(30,41,59,.08)}
   #hitOverlay #clockFace.low{background:#ffdfdf;color:#b61f4b;border-color:#fff;animation:spinHitUrgent .65s ease-in-out infinite alternate}
-  #hitOverlay #timerWrap{height:13px;background:rgba(255,255,255,.5);border:2px solid rgba(255,255,255,.8);border-radius:20px;box-shadow:0 3px 10px rgba(50,20,100,.12)}
-  #hitOverlay #timerBar{background:linear-gradient(90deg,#55e4c7,#f9e75c,#ff8a60);border-radius:20px}
+  #hitOverlay #timerWrap{height:13px;background:#EEF1F5;border:1px solid #E0E4EA;border-radius:20px;box-shadow:none}
+  #hitOverlay #timerBar{background:#5B8DEF;border-radius:20px}
   #hitOverlay #targetGrid{gap:12px;padding:2px 1px 16px}
-  #hitOverlay .target{position:relative;min-height:112px;border:3px solid rgba(255,255,255,.94);
-    border-radius:20px;padding:15px 10px;color:#32204f;font-size:13px;
-    background:linear-gradient(145deg,#fff 0%,#e9e0ff 100%);
-    box-shadow:0 7px 0 rgba(57,26,111,.25),0 13px 20px rgba(47,21,99,.18);
-    transition:box-shadow .18s,background .18s,filter .18s;touch-action:manipulation}
-  #hitOverlay .target:nth-child(4n + 1){background:linear-gradient(145deg,#fff4bc,#ffd0d9)}
-  #hitOverlay .target:nth-child(4n + 2){background:linear-gradient(145deg,#d4faff,#b8e4ff)}
-  #hitOverlay .target:nth-child(4n + 3){background:linear-gradient(145deg,#e6d9ff,#ffcde9)}
-  #hitOverlay .target:nth-child(4n + 4){background:linear-gradient(145deg,#d7ffe9,#d5e4ff)}
+  #hitOverlay .target{position:relative;min-height:112px;border:2px solid #E1E5EB;
+    border-radius:18px;padding:15px 10px;color:#253247;font-size:13px;
+    background:#FFFFFF;
+    box-shadow:0 4px 12px rgba(30,41,59,.08);
+    transition:box-shadow .18s,background .18s,filter .18s,border-color .18s;touch-action:manipulation}
+  #hitOverlay .target:nth-child(4n + 1),
+  #hitOverlay .target:nth-child(4n + 2),
+  #hitOverlay .target:nth-child(4n + 3),
+  #hitOverlay .target:nth-child(4n + 4){background:#FFFFFF}
   #hitOverlay .target .ic{font-size:30px;filter:drop-shadow(0 3px 2px rgba(70,32,105,.13))}
-  #hitOverlay .target:not(.dim):not(.correct):not(.wrong):hover{filter:saturate(1.22) brightness(1.045);box-shadow:0 9px 0 rgba(57,26,111,.22),0 17px 25px rgba(47,21,99,.22)}
-  #hitOverlay .target:not(.dim):not(.correct):not(.wrong):active{box-shadow:0 2px 0 rgba(57,26,111,.25);filter:brightness(.98)}
-  #hitOverlay .target:focus-visible{outline:4px solid #fff500;outline-offset:3px}
+  #hitOverlay .target:not(.dim):not(.correct):not(.wrong):hover{filter:none;border-color:#AEB8C6;box-shadow:0 7px 18px rgba(30,41,59,.12)}
+  #hitOverlay .target:not(.dim):not(.correct):not(.wrong):active{box-shadow:0 2px 7px rgba(30,41,59,.10);background:#F8FAFC}
+  #hitOverlay .target:focus-visible{outline:3px solid #5B8DEF;outline-offset:3px}
   #hitOverlay .target.correct{background:linear-gradient(145deg,#bbffe2,#65e5af);border-color:#fff;color:#07583c;box-shadow:0 5px 0 #26956e}
   #hitOverlay .target.wrong{background:linear-gradient(145deg,#ffe1e7,#ff9eb1);border-color:#fff;color:#8c143b;box-shadow:0 5px 0 #d95879}
   #hitOverlay .target.dim{opacity:.4;pointer-events:none}
@@ -310,7 +320,7 @@
       <div class="pill">💰 <span id="scoreVal">0</span>/100</div>
     </div>
     <div id="titleblock">
-      <h1>SPIN &amp; HIT</h1>
+      <h1>SPIN • SPOT • SECURE</h1>
       <p>INGRAM MICRO · CYBERSECURITY AWARENESS MONTH</p>
     </div>
 
@@ -406,7 +416,12 @@
         <div class="statBox"><div class="n" id="finalAcc">0%</div><div class="l">ACCURACY</div></div>
         <div class="statBox"><div class="n" id="finalTime">0:00</div><div class="l">⏱️ TIME TAKEN</div></div>
       </div>
-      <div id="finalNote" role="status" aria-live="polite">Saving your score…</div>
+      <div id="submitReminder">
+        🛡️ <strong>ONE FINAL STEP!</strong><br>
+        Your score is <strong>not recorded yet</strong>. Click <strong>SUBMIT SCORE</strong> below to save your result to the leaderboard.
+      </div>
+      <button id="submitScoreBtn" type="button">📤 SUBMIT SCORE</button>
+      <div id="finalNote" role="status" aria-live="polite">👇 Don’t forget to submit your score before leaving this page.</div>
       <div id="playerRecord"></div>
     </div>
 
@@ -843,10 +858,30 @@ window.addEventListener('error', function(e){
   async function submitScore(){
     if(scoreSubmissionStarted)return;
     scoreSubmissionStarted=true;
-    var now=new Date();
-    var durationSeconds=gameStartTime?Math.round((now.getTime()-gameStartTime)/1000):0;
-    var payload={name:playerName,email:playerEmail,score:score};
-    markAsPlayed(playerEmail,Object.assign({},payload,{durationSeconds:durationSeconds,durationDisplay:formatDuration(durationSeconds),playedAt:now.toISOString()}));
+    var submitBtn=document.getElementById('submitScoreBtn');
+    var reminder=document.getElementById('submitReminder');
+    if(submitBtn){
+      submitBtn.disabled=true;
+      submitBtn.textContent='⏳ SUBMITTING...';
+    }
+    const now = new Date();
+
+    const durationSeconds = gameStartTime
+      ? Math.round((now.getTime() - gameStartTime) / 1000)
+      : null;
+
+    const payload = {
+      name: playerName,
+      email: playerEmail,
+      score: score,
+      durationSeconds: durationSeconds,
+      durationDisplay: durationSeconds !== null ? formatDuration(durationSeconds) : '',
+      date: now.toISOString().slice(0, 10),
+      time: now.toTimeString().slice(0, 8),
+      playedAt: now.toISOString()
+    };
+
+    markAsPlayed(playerEmail, payload);
     var note=document.getElementById('finalNote');
     note.textContent='⏳ Sending your score to the leaderboard…';
     try{
@@ -857,11 +892,21 @@ window.addEventListener('error', function(e){
       finally{clearTimeout(timeout);}
       if(!response.ok)throw new Error('HTTP '+response.status);
       setSubmissionStatus(playerEmail,'sent');
-      note.textContent='🎉 Score submitted! Thanks for playing, '+playerName+'!';
+      note.textContent='✅ Score submitted successfully! Your result has been sent to the leaderboard. Thanks for playing, '+playerName+'!';
+      if(reminder) reminder.style.display='none';
+      if(submitBtn){
+        submitBtn.textContent='✓ SCORE SUBMITTED';
+        submitBtn.disabled=true;
+      }
     }catch(error){
       console.error('Score submission failed:',error.name,error.message);
       setSubmissionStatus(playerEmail,'pending');
-      note.textContent='⚠️ Score saved on this device, but online submission could not be confirmed. Contact the game administrator; do not replay.';
+      note.textContent='⚠️ Online submission could not be confirmed. Please click RETRY SUBMISSION or contact the game administrator.';
+      scoreSubmissionStarted=false;
+      if(submitBtn){
+        submitBtn.disabled=false;
+        submitBtn.textContent='↻ RETRY SUBMISSION';
+      }
     }
   }
   function setSubmissionStatus(email,status){
@@ -1230,9 +1275,23 @@ window.addEventListener('error', function(e){
     document.getElementById('finalTitle').textContent = title;
     document.getElementById('finalSub').textContent = sub;
     document.getElementById('playerRecord').textContent = 'Player: ' + playerName + ' (' + playerEmail + ') • ' + new Date().toLocaleString();
+    scoreSubmissionStarted=false;
+    var submitBtn=document.getElementById('submitScoreBtn');
+    var reminder=document.getElementById('submitReminder');
+    var finalNote=document.getElementById('finalNote');
+    if(submitBtn){
+      submitBtn.disabled=false;
+      submitBtn.textContent='📤 SUBMIT SCORE';
+    }
+    if(reminder) reminder.style.display='';
+    if(finalNote) finalNote.textContent='👇 Don’t forget to submit your score before leaving this page.';
     show('final');
-    void submitScore();
     spawnConfetti('finalScreen');
+  }
+
+  var submitScoreBtn=document.getElementById('submitScoreBtn');
+  if(submitScoreBtn){
+    submitScoreBtn.addEventListener('click', submitScore);
   }
 
   buildWheel();
