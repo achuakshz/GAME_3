@@ -811,7 +811,7 @@ window.addEventListener('error', function(e){
   var PLAYED_STORAGE_KEY = 'spinhit_played_emails_v1';
   // TODO: set this to your backend / Google Apps Script / API endpoint to receive scores.
   // If left blank, scores are still saved locally (localStorage) but nothing is sent to a server.
-  var SCORE_SUBMIT_URL = 'https://320da500b1c942b5821790fc274f46.a4.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/08/workflows/b5426afdfd9541b4b04cc0cb3e3f9bb9/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=s3Gu_RcHrJ4axB4IdWGSUDRuNVXhFbQsmXXYh-9Pezg';
+  var SCORE_SUBMIT_URL = 'https://320da500b1c942b5821790fc274f46.a4.environment.api.powerplatform.com/powerautomate/automations/direct/cu/31/workflows/04587fa775a44f35918aa0a0e3f5f8f8/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=f6JCBmzfxt1kawi9uVyXxgM0jwlHkPpz1qAnzeKqYYU';
 
   function sanitizeName(raw){
     return String(raw).normalize('NFKC').replace(/[\u0000-\u001f\u007f<>`{}]/g,'').replace(/\s+/g,' ').trim();
