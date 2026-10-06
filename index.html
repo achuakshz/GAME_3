@@ -668,6 +668,27 @@ window.addEventListener('error', function(e){
     }
   ];
 
+  // Alternate scenario bank: each player gets a fresh mix while keeping the same 3-level structure.
+  var ROUND_VARIANTS = {
+    phish:[{scenario:"You receive an email saying your Microsoft 365 mailbox is full and asks you to sign in through a shortened link to keep receiving mail.",options:[{icon:'🔗',text:'Open the shortened link and sign in'},{icon:'🛡️',text:'Open Microsoft 365 from your normal bookmark and verify there',correct:true},{icon:'↩️',text:'Reply asking whether the email is genuine'},{icon:'📤',text:'Forward it to coworkers to ask if they received it'}],tip:"Avoid sign-in links in unexpected quota warnings. Open the service through a trusted bookmark or company portal instead."}],
+    vish:[{scenario:"A caller claiming to be from the service desk says your account is under attack and asks you to read out the MFA code that just appeared on your phone.",options:[{icon:'🔢',text:'Read the MFA code to the caller'},{icon:'📞',text:'Hang up and contact the service desk through the official company channel',correct:true},{icon:'💬',text:'Ask the caller to message you from a personal number'},{icon:'⏳',text:'Keep the caller waiting while you approve the MFA prompt'}],tip:"MFA codes and approvals are authentication secrets. End the call and verify through a trusted company channel."}],
+    usb:[{scenario:"You find a USB drive labelled ‘Payroll 2026’ in a meeting room after a large event.",options:[{icon:'💻',text:'Plug it into your laptop to identify the owner'},{icon:'🔐',text:'Hand it to the approved IT/security or lost-property process without connecting it',correct:true},{icon:'🏠',text:'Take it home and test it on a personal computer'},{icon:'👥',text:'Pass it around the team to find the owner'}],tip:"Unknown removable media can carry malware. Never connect it to a corporate or personal device."}],
+    tail:[{scenario:"At a secure office door, someone you do not recognize says they forgot their badge and asks you to hold the door because they are late for a meeting.",options:[{icon:'🚪',text:'Hold the door because they seem rushed'},{icon:'🪪',text:'Ask them to use the proper visitor/badge process',correct:true},{icon:'🤝',text:'Let them in if they know an employee name'},{icon:'📱',text:'Take their phone number and let them enter'}],tip:"Physical access controls only work when every person authenticates properly. Direct unbadged visitors to the approved process."}],
+    invoice:[{scenario:"An email that looks like a regular supplier says their bank account changed today and asks you to pay an outstanding invoice to the new account immediately.",options:[{icon:'💳',text:'Update the bank details and pay immediately'},{icon:'☎️',text:'Verify the change using a known supplier contact and approved finance process',correct:true},{icon:'✉️',text:'Reply to the same email asking them to confirm'},{icon:'📎',text:'Open every attachment first to see whether it looks official'}],tip:"Payment-detail changes are a common business-email-compromise tactic. Verify through a trusted, independent contact method."}],
+    prize:[{scenario:"A message says you won a company giveaway and must scan a QR code within 15 minutes to claim a gift card.",options:[{icon:'📱',text:'Scan quickly before the prize expires'},{icon:'🔎',text:'Verify the giveaway through an official company channel before scanning',correct:true},{icon:'👥',text:'Send the QR code to teammates so they can try too'},{icon:'💳',text:'Enter card details if it asks for a small verification charge'}],tip:"Unexpected prizes plus urgency and QR codes are common phishing patterns. Verify the campaign independently."}],
+    boss:[{scenario:"You receive a Teams message from a display name matching a senior leader asking you to buy gift cards and send the codes because they are in a confidential meeting.",options:[{icon:'🎁',text:'Buy the cards because the leader requested it'},{icon:'📞',text:'Verify through a known contact method before taking any action',correct:true},{icon:'🤫',text:'Keep it secret because the request says confidential'},{icon:'💬',text:'Ask the same account for the amount and proceed'}],tip:"Attackers impersonate leaders and use secrecy or urgency. Verify unusual financial requests independently."}],
+    techsup:[{scenario:"A browser page suddenly says your device is infected and tells you to install a remote-support tool so a technician can clean it.",options:[{icon:'⬇️',text:'Install the tool so the technician can help'},{icon:'🧑‍💻',text:'Close the page and contact the official IT/security team',correct:true},{icon:'☎️',text:'Call the phone number shown in the pop-up'},{icon:'🔓',text:'Disable security controls so the tool can run'}],tip:"Unexpected browser security warnings can be fake. Do not install remote-access software or call numbers shown in pop-ups."}]
+  };
+
+  function randomizeQuestionVariants(){
+    ROUNDS.forEach(function(r){
+      var choices=[{scenario:r.scenario,options:r.options,tip:r.tip}].concat(ROUND_VARIANTS[r.id]||[]);
+      var chosen=choices[Math.floor(Math.random()*choices.length)];
+      r.scenario=chosen.scenario; r.options=chosen.options.map(function(o){return Object.assign({},o);}); r.tip=chosen.tip;
+      r.options=shuffle(r.options);
+    });
+  }
+
   var wheelEl = document.getElementById('wheel');
   var order = [];
   var roundIdx = 0;
@@ -778,6 +799,7 @@ window.addEventListener('error', function(e){
   }
 
   function newGame(){
+    randomizeQuestionVariants();
     order = buildLevelOrder();
     roundIdx = 0; score = 0; correctCount = 0; streak = 0;
     currentRankLabel = 'Rookie'; lastRankUp = null;
@@ -808,9 +830,12 @@ window.addEventListener('error', function(e){
   var playerEmail = '';
   var gameStartTime = 0;
   var COMPANY_DOMAIN = 'ingrammicro.com';
-  var PLAYED_STORAGE_KEY = 'spinhit_played_emails_v1';
+  var GAME_ID = 'SPIN_SPOT_SECURE';
+  // Paste the HTTP URL of this game's Power Automate Check & Reserve flow here.
+  // Expected request: {gameId,name,email}; expected response: {allowed:true|false, exists:true|false, message?:string}.
+  var CHECK_RESERVE_URL = 'https://320da500b1c942b5821790fc274f46.a4.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/16/workflows/bf8dd301873640a18f6d29a155255b8f/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=Om81CAZvQHk0oppK6LQY0U5L2vjKi1EledEheEE-TDo';
   // TODO: set this to your backend / Google Apps Script / API endpoint to receive scores.
-  // If left blank, scores are still saved locally (localStorage) but nothing is sent to a server.
+  // Scores are sent to the organization leaderboard through Power Automate; browser storage is not used.
   var SCORE_SUBMIT_URL = 'https://320da500b1c942b5821790fc274f46.a4.environment.api.powerplatform.com/powerautomate/automations/direct/cu/31/workflows/04587fa775a44f35918aa0a0e3f5f8f8/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=f6JCBmzfxt1kawi9uVyXxgM0jwlHkPpz1qAnzeKqYYU';
 
   function sanitizeName(raw){
@@ -825,32 +850,29 @@ window.addEventListener('error', function(e){
     var rem = s % 60;
     return m + ':' + (rem < 10 ? '0' : '') + rem;
   }
-  function getPlayedEmails(){
+  async function checkAndReservePlayer(name, email){
+    var normalizedEmail = sanitizeEmail(email);
+    var controller=new AbortController();
+    var timeout=setTimeout(function(){controller.abort();},12000);
     try{
-      var raw = localStorage.getItem(PLAYED_STORAGE_KEY);
-      return raw ? JSON.parse(raw) : {};
-    }catch(e){ return {}; }
-  }
-  function hasAlreadyPlayed(email){
-    try{
-      var played = getPlayedEmails();
-      return !!played[email];
-    }catch(e){ return false; }
-  }
-  function markAsPlayed(email, payload){
-    try{
-      var played = getPlayedEmails();
-      played[email] = {
-        name: payload.name,
-        score: payload.score,
-        durationSeconds: payload.durationSeconds,
-        durationDisplay: payload.durationDisplay,
-        timestamp: new Date(payload.playedAt).getTime(),
-        playedAt: payload.playedAt,
-        playedAtDisplay: new Date(payload.playedAt).toLocaleString()
+      var response=await fetch(CHECK_RESERVE_URL,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({email:normalizedEmail}),
+        signal:controller.signal
+      });
+      if(!response.ok) return {ok:false,message:'Unable to verify participation right now.'};
+      var data={}; try{data=await response.json();}catch(e){}
+      var resultText=String(data.result||'').trim().toLowerCase();
+      var exists = data.exists === true || String(data.exists).toLowerCase() === 'true' || resultText === 'exists';
+      return {
+        ok:true,
+        allowed:!exists,
+        message: exists ? 'This email has already been used for this game. Only one entry is allowed.' : ''
       };
-      localStorage.setItem(PLAYED_STORAGE_KEY, JSON.stringify(played));
-    }catch(e){ /* storage unavailable — fail silently, game still works */ }
+    }catch(e){
+      return {ok:false,message:e.name==='AbortError'?'Participation check timed out. Please try again.':'Unable to reach the participation check. Please try again.'};
+    }finally{ clearTimeout(timeout); }
   }
 
   // The POST contains exactly the fields accepted by the supplied schema.
@@ -871,8 +893,9 @@ window.addEventListener('error', function(e){
       : null;
 
     const payload = {
+      gameId: GAME_ID,
       name: playerName,
-      email: playerEmail,
+      email: sanitizeEmail(playerEmail),
       score: score,
       durationSeconds: durationSeconds,
       durationDisplay: durationSeconds !== null ? formatDuration(durationSeconds) : '',
@@ -881,7 +904,6 @@ window.addEventListener('error', function(e){
       playedAt: now.toISOString()
     };
 
-    markAsPlayed(playerEmail, payload);
     var note=document.getElementById('finalNote');
     note.textContent='⏳ Sending your score to the leaderboard…';
     try{
@@ -909,45 +931,11 @@ window.addEventListener('error', function(e){
       }
     }
   }
-  function setSubmissionStatus(email,status){
-    try{var played=getPlayedEmails();if(played[email]){played[email].submissionStatus=status;localStorage.setItem(PLAYED_STORAGE_KEY,JSON.stringify(played));}}
-    catch(e){console.warn('Could not update local submission status.');}
-  }
+  function setSubmissionStatus(email,status){ /* SharePoint/Power Automate is the source of truth. */ }
 
-  function getLeaderboard(){
-    var played = getPlayedEmails();
-    var rows = [];
-    for(var email in played){
-      if(!played.hasOwnProperty(email)) continue;
-      var entry = played[email];
-      // support older records that were just a raw timestamp number
-      if(typeof entry === 'number'){
-        rows.push({ email: email, name: '', score: null, durationSeconds: null, durationDisplay: '', timestamp: entry, playedAtDisplay: new Date(entry).toLocaleString() });
-      } else {
-        rows.push({
-          email: email,
-          name: entry.name || '',
-          score: (typeof entry.score === 'number') ? entry.score : null,
-          durationSeconds: (typeof entry.durationSeconds === 'number') ? entry.durationSeconds : null,
-          durationDisplay: entry.durationDisplay || '',
-          timestamp: entry.timestamp || 0,
-          playedAtDisplay: entry.playedAtDisplay || (entry.timestamp ? new Date(entry.timestamp).toLocaleString() : '')
-        });
-      }
-    }
-    // Rank by score first (higher is better); when scores tie, the faster
-    // completion time wins — this is what surfaces who finished quickest.
-    rows.sort(function(a,b){
-      if((b.score||0) !== (a.score||0)) return (b.score||0) - (a.score||0);
-      var aDur = (a.durationSeconds===null) ? Infinity : a.durationSeconds;
-      var bDur = (b.durationSeconds===null) ? Infinity : b.durationSeconds;
-      if(aDur !== bDur) return aDur - bDur;
-      return a.timestamp - b.timestamp;
-    });
-    return rows;
-  }
+  function getLeaderboard(){ return []; }
 
-  document.getElementById('loginBtn').onclick = function(){
+  document.getElementById('loginBtn').onclick = async function(){
     var nameVal = sanitizeName(document.getElementById('playerName').value);
     var emailVal = sanitizeEmail(document.getElementById('playerEmail').value);
     var errEl = document.getElementById('loginError');
@@ -967,9 +955,15 @@ window.addEventListener('error', function(e){
       errEl.style.display = 'block';
       return;
     }
-    if(hasAlreadyPlayed(emailVal)){
-      errEl.textContent = "This email has already been used to play. Only one entry per person is allowed.";
-      errEl.style.display = 'block';
+    var loginBtn=document.getElementById('loginBtn');
+    loginBtn.disabled=true;
+    loginBtn.textContent='CHECKING...';
+    var eligibility=await checkAndReservePlayer(nameVal,emailVal);
+    loginBtn.disabled=false;
+    loginBtn.textContent='START';
+    if(!eligibility.ok || !eligibility.allowed){
+      errEl.textContent = eligibility.message || (!eligibility.ok ? 'Unable to verify participation. Please try again.' : 'This email has already been used for this game. Only one entry is allowed.');
+      errEl.style.display='block';
       return;
     }
 
@@ -989,8 +983,6 @@ window.addEventListener('error', function(e){
   document.getElementById('startBtn').onclick = function(){
     sfxTap();
     gameStartTime = Date.now();
-    // Reserve this email immediately so refreshing cannot restart the game.
-    markAsPlayed(playerEmail,{name:playerName,score:null,durationSeconds:null,durationDisplay:"",playedAt:new Date().toISOString()});
     document.getElementById('startScreen').classList.add('hidden');
   };
 
@@ -1274,7 +1266,7 @@ window.addEventListener('error', function(e){
     document.getElementById('finalBadge').textContent = badge;
     document.getElementById('finalTitle').textContent = title;
     document.getElementById('finalSub').textContent = sub;
-    document.getElementById('playerRecord').textContent = 'Player: ' + playerName + ' (' + playerEmail + ') • ' + new Date().toLocaleString();
+    document.getElementById('playerRecord').textContent = 'Player: ' + playerName + ' (' + playerEmail + ') • ' + new Date().toLocaleDateString();
     scoreSubmissionStarted=false;
     var submitBtn=document.getElementById('submitScoreBtn');
     var reminder=document.getElementById('submitReminder');
